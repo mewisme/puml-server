@@ -4,7 +4,7 @@ echo Building PUML Server...
 call mvnw.cmd clean package -DskipTests
 if %ERRORLEVEL% EQU 0 (
     echo.
-    echo Build successful! JAR file created in target\puml-server-0.0.1-SNAPSHOT.jar
+    echo Build successful! JAR file created in target\puml-server-0.0.2-SNAPSHOT.jar
 ) else (
     echo.
     echo Build failed!
