@@ -5,7 +5,7 @@ cd "$(dirname "$0")/.."
 echo "Starting PUML Server on port 7235..."
 echo ""
 
-if [ ! -f "target/puml-server-0.0.2-SNAPSHOT.jar" ]; then
+if [ ! -f "target/puml-server-0.0.3-SNAPSHOT.jar" ]; then
     echo "JAR file not found. Building project first..."
     ./scripts/build.sh
     if [ $? -ne 0 ]; then
@@ -20,7 +20,7 @@ java --add-opens java.desktop/com.sun.imageio.plugins.png=ALL-UNNAMED \
      --add-opens java.desktop/com.sun.imageio.plugins.gif=ALL-UNNAMED \
      --add-opens java.desktop/com.sun.imageio.plugins.bmp=ALL-UNNAMED \
      --add-opens java.desktop/com.sun.imageio.plugins.wbmp=ALL-UNNAMED \
-     -jar target/puml-server-0.0.2-SNAPSHOT.jar
+     -jar target/puml-server-0.0.3-SNAPSHOT.jar
 
 if [ $? -ne 0 ]; then
     echo ""

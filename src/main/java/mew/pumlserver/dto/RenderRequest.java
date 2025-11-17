@@ -18,7 +18,7 @@ public class RenderRequest {
              message = "PUML content must contain @startuml and @enduml tags",
              flags = Pattern.Flag.DOTALL)
     @Schema(description = "PlantUML diagram source code", 
-            example = "@startuml\n\n!theme plain\n\nBob -> Alice : hello\n\n@enduml")
+            example = "@startuml\n\nBob -> Alice : hello\n\n@enduml")
     private String puml;
 }
 

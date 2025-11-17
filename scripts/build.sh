@@ -7,7 +7,7 @@ echo "Building PUML Server..."
 
 if [ $? -eq 0 ]; then
     echo ""
-    echo "Build successful! JAR file created in target/puml-server-0.0.2-SNAPSHOT.jar"
+    echo "Build successful! JAR file created in target/puml-server-0.0.3-SNAPSHOT.jar"
 else
     echo ""
     echo "Build failed!"
