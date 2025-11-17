@@ -15,7 +15,7 @@ REST API server for rendering PlantUML diagrams to various formats (SVG, PNG, Te
 ## Requirements
 
 - Java 17 or higher
-- Maven 3.6 or higher
+- Maven Wrapper (included in project, no need to install Maven separately)
 
 ## Quick Start
 
@@ -32,21 +32,24 @@ chmod +x scripts/*.sh
 ./scripts/build-and-run.sh
 ```
 
-### Using Maven
+### Using Maven Wrapper
 
 ```bash
 # Build project
-mvn clean package
+./mvnw clean package
+# Windows: mvnw.cmd clean package
 
 # Run application
-mvn spring-boot:run
+./mvnw spring-boot:run
+# Windows: mvnw.cmd spring-boot:run
 ```
 
 ### Run JAR directly
 
 ```bash
 # Build first
-mvn clean package
+./mvnw clean package
+# Windows: mvnw.cmd clean package
 
 # Run with JVM arguments
 java --add-opens java.desktop/com.sun.imageio.plugins.png=ALL-UNNAMED \

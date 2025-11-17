@@ -3,7 +3,7 @@
 cd "$(dirname "$0")/.."
 
 echo "Building PUML Server..."
-mvn clean package -DskipTests
+./mvnw clean package -DskipTests
 
 if [ $? -eq 0 ]; then
     echo ""
