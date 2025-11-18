@@ -30,7 +30,7 @@ public class RenderController {
   }
 
   @PostMapping(value = "/svg", consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
-  @Operation(summary = "Render PUML to SVG", description = "Converts PlantUML diagram to SVG format and returns cache ID. The same ID can be used to retrieve SVG, PNG, or Text formats.")
+  @Operation(summary = "Render PUML to SVG", description = "Converts PlantUML diagram to SVG format and returns cache ID. The same ID can be used to retrieve SVG, PNG, Text formats, or the original PUML code via GET /api/v1/puml/{id}. Cache IDs are shared across all endpoints.")
   @io.swagger.v3.oas.annotations.parameters.RequestBody(description = "PlantUML diagram source code", required = true, content = @Content(mediaType = "application/json", schema = @Schema(implementation = RenderRequest.class), examples = @ExampleObject(name = "Example PUML", value = "{\"puml\":\"@startuml\\n\\nBob -> Alice : hello\\n\\n@enduml\"}")))
   public ResponseEntity<RenderResponse> renderSvg(
       @Valid @org.springframework.web.bind.annotation.RequestBody RenderRequest request) throws IOException {
@@ -44,7 +44,7 @@ public class RenderController {
   }
 
   @PostMapping(value = "/png", consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
-  @Operation(summary = "Render PUML to PNG", description = "Converts PlantUML diagram to PNG format and returns cache ID. The same ID can be used to retrieve SVG, PNG, or Text formats.")
+  @Operation(summary = "Render PUML to PNG", description = "Converts PlantUML diagram to PNG format and returns cache ID. The same ID can be used to retrieve SVG, PNG, Text formats, or the original PUML code via GET /api/v1/puml/{id}. Cache IDs are shared across all endpoints.")
   @io.swagger.v3.oas.annotations.parameters.RequestBody(description = "PlantUML diagram source code", required = true, content = @Content(mediaType = "application/json", schema = @Schema(implementation = RenderRequest.class), examples = @ExampleObject(name = "Example PUML", value = "{\"puml\":\"@startuml\\n\\nBob -> Alice : hello\\n\\n@enduml\"}")))
   public ResponseEntity<RenderResponse> renderPng(
       @Valid @org.springframework.web.bind.annotation.RequestBody RenderRequest request) throws IOException {
@@ -58,7 +58,7 @@ public class RenderController {
   }
 
   @PostMapping(value = "/text", consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
-  @Operation(summary = "Render PUML to Text", description = "Converts PlantUML diagram to plain text format and returns cache ID. The same ID can be used to retrieve SVG, PNG, or Text formats.")
+  @Operation(summary = "Render PUML to Text", description = "Converts PlantUML diagram to plain text format and returns cache ID. The same ID can be used to retrieve SVG, PNG, Text formats, or the original PUML code via GET /api/v1/puml/{id}. Cache IDs are shared across all endpoints.")
   @io.swagger.v3.oas.annotations.parameters.RequestBody(description = "PlantUML diagram source code", required = true, content = @Content(mediaType = "application/json", schema = @Schema(implementation = RenderRequest.class), examples = @ExampleObject(name = "Example PUML", value = "{\"puml\":\"@startuml\\n\\nBob -> Alice : hello\\n\\n@enduml\"}")))
   public ResponseEntity<RenderResponse> renderText(
       @Valid @org.springframework.web.bind.annotation.RequestBody RenderRequest request) throws IOException {
@@ -71,7 +71,7 @@ public class RenderController {
   }
 
   @GetMapping(value = "/{type}/{id}/raw")
-  @Operation(summary = "Get rendered content by ID", description = "Retrieves cached rendered content by ID and format type. The same ID can be used to retrieve SVG, PNG, or Text formats. Content expires after 30 minutes.")
+  @Operation(summary = "Get rendered content by ID", description = "Retrieves cached rendered content by ID and format type. The ID can be obtained from any endpoint that returns an ID (POST /api/v1/puml, POST /api/v1/render/svg, etc.). The same ID can be used to retrieve SVG, PNG, or Text formats. Content expires after 30 minutes.")
   public ResponseEntity<?> getRawContent(
       @PathVariable String type,
       @PathVariable String id) {

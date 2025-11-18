@@ -29,7 +29,7 @@ public class PumlController {
   }
 
   @PostMapping(consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
-  @Operation(summary = "Cache PUML code", description = "Caches PlantUML source code and returns cache ID. If the same PUML code already exists in cache, returns the existing ID. Otherwise, creates a new cache entry and returns a new ID.")
+  @Operation(summary = "Cache PUML code", description = "Caches PlantUML source code and returns cache ID. If the same PUML code already exists in cache, returns the existing ID. Otherwise, creates a new cache entry and returns a new ID. The returned ID can be used with any other endpoint (GET /api/v1/puml/{id}, GET /api/v1/render/{type}/{id}/raw). Cache IDs are shared across all endpoints.")
   @io.swagger.v3.oas.annotations.parameters.RequestBody(description = "PlantUML diagram source code", required = true, content = @Content(mediaType = "application/json", schema = @Schema(implementation = RenderRequest.class), examples = @ExampleObject(name = "Example PUML", value = "{\"puml\":\"@startuml\\n\\nBob -> Alice : hello\\n\\n@enduml\"}")))
   public ResponseEntity<RenderResponse> cachePuml(
       @Valid @org.springframework.web.bind.annotation.RequestBody RenderRequest request) {
@@ -43,7 +43,7 @@ public class PumlController {
   }
 
   @GetMapping(value = "/{id}", produces = MediaType.APPLICATION_JSON_VALUE)
-  @Operation(summary = "Get PUML code by ID", description = "Retrieves the PlantUML source code by cache ID. The ID is returned when calling the /render API endpoints or POST /api/v1/puml.")
+  @Operation(summary = "Get PUML code by ID", description = "Retrieves the PlantUML source code by cache ID. The ID can be obtained from any endpoint that returns an ID (POST /api/v1/puml, POST /api/v1/render/svg, POST /api/v1/render/png, POST /api/v1/render/text). Cache IDs are shared across all endpoints.")
   public ResponseEntity<PumlResponse> getPumlById(@PathVariable String id) {
     CacheEntry entry = cacheService.getCachedEntry(id);
 
@@ -59,4 +59,3 @@ public class PumlController {
         .body(new PumlResponse(entry.getPuml()));
   }
 }
-

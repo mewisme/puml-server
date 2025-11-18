@@ -50,19 +50,6 @@ dot -V
 
 ## Quick Start
 
-### Build and Run
-
-**Windows:**
-```batch
-scripts\build-and-run.bat
-```
-
-**Linux/Mac:**
-```bash
-chmod +x scripts/*.sh
-./scripts/build-and-run.sh
-```
-
 ### Using Maven Wrapper
 
 ```bash
@@ -88,13 +75,13 @@ java --add-opens java.desktop/com.sun.imageio.plugins.png=ALL-UNNAMED \
      --add-opens java.desktop/com.sun.imageio.plugins.gif=ALL-UNNAMED \
      --add-opens java.desktop/com.sun.imageio.plugins.bmp=ALL-UNNAMED \
      --add-opens java.desktop/com.sun.imageio.plugins.wbmp=ALL-UNNAMED \
-     -jar target/puml-server-0.0.5-SNAPSHOT.jar
+     -jar target/puml-server-0.0.6-SNAPSHOT.jar
 ```
 
 ## API Endpoints
 
 ### POST /api/v1/render/svg
-Renders PlantUML diagram to SVG format.
+Renders PlantUML diagram to SVG format and returns cache ID. The same ID can be used to retrieve SVG, PNG, Text formats, or the original PUML code.
 
 **Request:**
 ```json
@@ -103,10 +90,17 @@ Renders PlantUML diagram to SVG format.
 }
 ```
 
-**Response:** SVG image (image/svg+xml)
+**Response:**
+```json
+{
+  "id": "550e8400-e29b-41d4-a716-446655440000"
+}
+```
+
+**Note:** The returned ID is shared across all endpoints. You can use it with `GET /api/v1/puml/{id}` or `GET /api/v1/render/{type}/{id}/raw`.
 
 ### POST /api/v1/render/png
-Renders PlantUML diagram to PNG format.
+Renders PlantUML diagram to PNG format and returns cache ID. The same ID can be used to retrieve SVG, PNG, Text formats, or the original PUML code.
 
 **Request:**
 ```json
@@ -115,10 +109,17 @@ Renders PlantUML diagram to PNG format.
 }
 ```
 
-**Response:** PNG image (image/png)
+**Response:**
+```json
+{
+  "id": "550e8400-e29b-41d4-a716-446655440000"
+}
+```
+
+**Note:** The returned ID is shared across all endpoints. You can use it with `GET /api/v1/puml/{id}` or `GET /api/v1/render/{type}/{id}/raw`.
 
 ### POST /api/v1/render/text
-Renders PlantUML diagram to plain text format.
+Renders PlantUML diagram to plain text format and returns cache ID. The same ID can be used to retrieve SVG, PNG, Text formats, or the original PUML code.
 
 **Request:**
 ```json
@@ -127,10 +128,17 @@ Renders PlantUML diagram to plain text format.
 }
 ```
 
-**Response:** Plain text (text/plain)
+**Response:**
+```json
+{
+  "id": "550e8400-e29b-41d4-a716-446655440000"
+}
+```
+
+**Note:** The returned ID is shared across all endpoints. You can use it with `GET /api/v1/puml/{id}` or `GET /api/v1/render/{type}/{id}/raw`.
 
 ### POST /api/v1/puml
-Caches PlantUML source code and returns cache ID. If the same PUML code already exists in cache, returns the existing ID. Otherwise, creates a new cache entry and returns a new ID.
+Caches PlantUML source code and returns cache ID. If the same PUML code already exists in cache, returns the existing ID. Otherwise, creates a new cache entry and returns a new ID. The returned ID can be used with any other endpoint (`GET /api/v1/puml/{id}`, `GET /api/v1/render/{type}/{id}/raw`).
 
 **Request:**
 ```json
@@ -147,7 +155,7 @@ Caches PlantUML source code and returns cache ID. If the same PUML code already 
 ```
 
 ### GET /api/v1/puml/{id}
-Retrieves the PlantUML source code by cache ID. The ID is returned when calling the `/render` API endpoints or `POST /api/v1/puml`.
+Retrieves the PlantUML source code by cache ID. The ID can be obtained from any endpoint that returns an ID (`POST /api/v1/puml`, `POST /api/v1/render/svg`, `POST /api/v1/render/png`, or `POST /api/v1/render/text`).
 
 **Response:**
 ```json
@@ -157,7 +165,9 @@ Retrieves the PlantUML source code by cache ID. The ID is returned when calling 
 ```
 
 ### GET /api/v1/render/{type}/{id}/raw
-Retrieves cached rendered content by ID and format type (svg, png, or text). The same ID can be used to retrieve SVG, PNG, or Text formats. Content expires after 30 minutes.
+Retrieves cached rendered content by ID and format type (svg, png, or text). The ID can be obtained from any endpoint that returns an ID. The same ID can be used to retrieve SVG, PNG, or Text formats. Content expires after 30 minutes.
+
+**Note:** Cache IDs are shared across all endpoints. An ID returned from `POST /api/v1/puml` can be used here, and vice versa.
 
 **Response:** Rendered content in the requested format (SVG, PNG, or plain text)
 
@@ -179,16 +189,17 @@ server.port=7235
 
 ## Caching
 
-The API uses an in-memory cache to store PUML code and rendered formats:
+The API uses a shared in-memory cache to store PUML code and rendered formats:
 
 - **Cache Duration**: 30 minutes
 - **Cache Behavior**: 
   - When you call `POST /api/v1/puml` or any `/render` endpoint, the system checks if the same PUML code already exists in cache
   - If found, it returns the existing cache ID
   - If not found, it creates a new cache entry and returns a new ID
-- **Cache ID**: A unique UUID that can be used to retrieve:
-  - The original PUML code via `GET /api/v1/puml/{id}`
-  - Rendered formats (SVG, PNG, Text) via `GET /api/v1/render/{type}/{id}/raw`
+- **Shared Cache ID**: Cache IDs are shared across all endpoints and controllers. The same ID returned from any endpoint can be used with any other endpoint:
+  - Get the original PUML code via `GET /api/v1/puml/{id}`
+  - Get rendered formats (SVG, PNG, Text) via `GET /api/v1/render/{type}/{id}/raw`
+  - Example: An ID returned from `POST /api/v1/render/svg` can be used with `GET /api/v1/puml/{id}` or `GET /api/v1/render/png/{id}/raw`
 
 ## Request Validation
 

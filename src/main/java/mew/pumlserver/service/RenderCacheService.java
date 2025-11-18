@@ -23,13 +23,29 @@ public class RenderCacheService {
 
     /**
      * Cache all rendered formats (SVG, PNG, Text) for a PUML diagram and return unique ID.
-     * If an entry with the same PUML already exists, return its ID instead of creating a new one.
+     * If an entry with the same PUML already exists:
+     * - If it has rendered content, return its ID
+     * - If it doesn't have rendered content, render and update the entry, then return its ID
+     * Otherwise, create a new cache entry with all formats.
      */
     public String cacheAllFormats(String puml) throws IOException {
         // Check if this PUML is already cached
         for (Map.Entry<String, CacheEntry> entry : cache.entrySet()) {
-            if (entry.getValue().getPuml().equals(puml) && !isExpired(entry.getValue())) {
-                return entry.getKey(); // Return existing ID
+            CacheEntry cachedEntry = entry.getValue();
+            if (cachedEntry.getPuml().equals(puml) && !isExpired(cachedEntry)) {
+                // If entry already has rendered content, return existing ID
+                if (cachedEntry.getSvgContent() != null && cachedEntry.getPngContent() != null 
+                    && cachedEntry.getTextContent() != null) {
+                    return entry.getKey();
+                }
+                // If entry exists but doesn't have rendered content, render and update it
+                byte[] svg = renderService.renderSvg(puml);
+                byte[] png = renderService.renderPng(puml);
+                String text = renderService.renderText(puml);
+                cachedEntry.setSvgContent(svg);
+                cachedEntry.setPngContent(png);
+                cachedEntry.setTextContent(text);
+                return entry.getKey();
             }
         }
 
