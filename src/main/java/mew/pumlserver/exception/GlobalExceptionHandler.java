@@ -66,9 +66,27 @@ public class GlobalExceptionHandler {
   public ResponseEntity<Map<String, Object>> handleIOException(
       IOException ex, WebRequest request) {
 
+    String errorMessage = ex.getMessage();
+    String error = "Rendering Error";
+
+    // Check if error is related to Graphviz
+    if (errorMessage != null && (errorMessage.contains("Graphviz") ||
+        errorMessage.contains("dot") ||
+        errorMessage.contains("Cannot find Graphviz"))) {
+      error = "Graphviz Not Found";
+      errorMessage = "Graphviz is required for some PlantUML diagram types (activity, component, etc.). " +
+          "Please install Graphviz on your system:\n" +
+          "- Linux: sudo apt-get install graphviz (Debian/Ubuntu) or sudo yum install graphviz (RHEL/CentOS)\n" +
+          "- Windows: Download from https://graphviz.org/download/\n" +
+          "- Mac: brew install graphviz\n\n" +
+          "Original error: " + ex.getMessage();
+    } else {
+      errorMessage = "Failed to render PlantUML diagram: " + errorMessage;
+    }
+
     Map<String, Object> body = new HashMap<>();
-    body.put("error", "Rendering Error");
-    body.put("message", "Failed to render PlantUML diagram: " + ex.getMessage());
+    body.put("error", error);
+    body.put("message", errorMessage);
     body.put("status", HttpStatus.INTERNAL_SERVER_ERROR.value());
     body.put("path", request.getDescription(false).replace("uri=", ""));
     body.put("timestamp", LocalDateTime.now());
@@ -84,6 +102,36 @@ public class GlobalExceptionHandler {
     body.put("error", "Module Access Error");
     body.put("message",
         "PlantUML requires Java module access. Please ensure JVM arguments are set: --add-opens java.desktop/com.sun.imageio.plugins.png=ALL-UNNAMED");
+    body.put("status", HttpStatus.INTERNAL_SERVER_ERROR.value());
+    body.put("path", request.getDescription(false).replace("uri=", ""));
+    body.put("timestamp", LocalDateTime.now());
+
+    return new ResponseEntity<>(body, HttpStatus.INTERNAL_SERVER_ERROR);
+  }
+
+  @ExceptionHandler(RuntimeException.class)
+  public ResponseEntity<Map<String, Object>> handleRuntimeException(
+      RuntimeException ex, WebRequest request) {
+
+    String errorMessage = ex.getMessage();
+    String error = "Internal Server Error";
+
+    // Check if error is related to Graphviz
+    if (errorMessage != null && (errorMessage.contains("Graphviz") ||
+        errorMessage.contains("dot") ||
+        errorMessage.contains("Cannot find Graphviz"))) {
+      error = "Graphviz Not Found";
+      errorMessage = "Graphviz is required for some PlantUML diagram types (activity, component, etc.). " +
+          "Please install Graphviz on your system:\n" +
+          "- Linux: sudo apt-get install graphviz (Debian/Ubuntu) or sudo yum install graphviz (RHEL/CentOS)\n" +
+          "- Windows: Download from https://graphviz.org/download/\n" +
+          "- Mac: brew install graphviz\n\n" +
+          "Original error: " + ex.getMessage();
+    }
+
+    Map<String, Object> body = new HashMap<>();
+    body.put("error", error);
+    body.put("message", errorMessage);
     body.put("status", HttpStatus.INTERNAL_SERVER_ERROR.value());
     body.put("path", request.getDescription(false).replace("uri=", ""));
     body.put("timestamp", LocalDateTime.now());

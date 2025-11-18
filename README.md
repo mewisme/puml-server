@@ -16,6 +16,35 @@ REST API server for rendering PlantUML diagrams to various formats (SVG, PNG, Te
 
 - Java 17 or higher
 - Maven Wrapper (included in project, no need to install Maven separately)
+- Graphviz (optional but recommended for some diagram types)
+
+### Installing Graphviz
+
+Graphviz is required for certain PlantUML diagram types (activity diagrams, component diagrams, etc.). If you encounter a "Graphviz Not Found" error, install Graphviz:
+
+**Linux (Debian/Ubuntu):**
+```bash
+sudo apt-get update
+sudo apt-get install graphviz
+```
+
+**Linux (RHEL/CentOS):**
+```bash
+sudo yum install graphviz
+```
+
+**Windows:**
+Download and install from [https://graphviz.org/download/](https://graphviz.org/download/)
+
+**macOS:**
+```bash
+brew install graphviz
+```
+
+After installation, verify Graphviz is available:
+```bash
+dot -V
+```
 
 ## Quick Start
 
@@ -57,7 +86,7 @@ java --add-opens java.desktop/com.sun.imageio.plugins.png=ALL-UNNAMED \
      --add-opens java.desktop/com.sun.imageio.plugins.gif=ALL-UNNAMED \
      --add-opens java.desktop/com.sun.imageio.plugins.bmp=ALL-UNNAMED \
      --add-opens java.desktop/com.sun.imageio.plugins.wbmp=ALL-UNNAMED \
-     -jar target/puml-server-0.0.3-SNAPSHOT.jar
+     -jar target/puml-server-0.0.4-SNAPSHOT.jar
 ```
 
 ## API Endpoints
