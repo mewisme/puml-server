@@ -46,6 +46,25 @@ public class RenderCacheService {
     }
 
     /**
+     * Cache PUML code only (without rendering) and return unique ID.
+     * If an entry with the same PUML already exists, return its ID instead of creating a new one.
+     */
+    public String cachePumlCode(String puml) {
+        // Check if this PUML is already cached
+        for (Map.Entry<String, CacheEntry> entry : cache.entrySet()) {
+            if (entry.getValue().getPuml().equals(puml) && !isExpired(entry.getValue())) {
+                return entry.getKey(); // Return existing ID
+            }
+        }
+
+        // Create new cache entry with only PUML code (no rendering)
+        String id = UUID.randomUUID().toString();
+        CacheEntry entry = new CacheEntry(id, puml, LocalDateTime.now(), null, null, null);
+        cache.put(id, entry);
+        return id;
+    }
+
+    /**
      * Get cached entry by ID
      */
     public CacheEntry getCachedEntry(String id) {
