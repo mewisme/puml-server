@@ -29,16 +29,13 @@ public class RenderCacheService {
      * Otherwise, create a new cache entry with all formats.
      */
     public String cacheAllFormats(String puml) throws IOException {
-        // Check if this PUML is already cached
         for (Map.Entry<String, CacheEntry> entry : cache.entrySet()) {
             CacheEntry cachedEntry = entry.getValue();
             if (cachedEntry.getPuml().equals(puml) && !isExpired(cachedEntry)) {
-                // If entry already has rendered content, return existing ID
                 if (cachedEntry.getSvgContent() != null && cachedEntry.getPngContent() != null 
                     && cachedEntry.getTextContent() != null) {
                     return entry.getKey();
                 }
-                // If entry exists but doesn't have rendered content, render and update it
                 byte[] svg = renderService.renderSvg(puml);
                 byte[] png = renderService.renderPng(puml);
                 String text = renderService.renderText(puml);
@@ -49,12 +46,10 @@ public class RenderCacheService {
             }
         }
 
-        // Render all formats
         byte[] svg = renderService.renderSvg(puml);
         byte[] png = renderService.renderPng(puml);
         String text = renderService.renderText(puml);
 
-        // Create new cache entry with all formats
         String id = UUID.randomUUID().toString();
         CacheEntry entry = new CacheEntry(id, puml, LocalDateTime.now(), svg, png, text);
         cache.put(id, entry);
@@ -66,14 +61,12 @@ public class RenderCacheService {
      * If an entry with the same PUML already exists, return its ID instead of creating a new one.
      */
     public String cachePumlCode(String puml) {
-        // Check if this PUML is already cached
         for (Map.Entry<String, CacheEntry> entry : cache.entrySet()) {
             if (entry.getValue().getPuml().equals(puml) && !isExpired(entry.getValue())) {
-                return entry.getKey(); // Return existing ID
+                return entry.getKey();
             }
         }
 
-        // Create new cache entry with only PUML code (no rendering)
         String id = UUID.randomUUID().toString();
         CacheEntry entry = new CacheEntry(id, puml, LocalDateTime.now(), null, null, null);
         cache.put(id, entry);
@@ -89,7 +82,6 @@ public class RenderCacheService {
             return null;
         }
         
-        // Check if expired
         if (isExpired(entry)) {
             cache.remove(id);
             return null;
@@ -110,13 +102,11 @@ public class RenderCacheService {
             return;
         }
         
-        // If entry already has all rendered content, no need to render
         if (entry.getSvgContent() != null && entry.getPngContent() != null 
             && entry.getTextContent() != null) {
             return;
         }
         
-        // Render all formats and update entry
         byte[] svg = renderService.renderSvg(entry.getPuml());
         byte[] png = renderService.renderPng(entry.getPuml());
         String text = renderService.renderText(entry.getPuml());

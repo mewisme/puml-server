@@ -9,6 +9,9 @@ REST API server for rendering PlantUML diagrams to various formats (SVG, PNG, Te
 - Render PlantUML diagrams to plain text format
 - Cache PUML code with unique IDs for later retrieval
 - Retrieve cached PUML code by ID
+- Generate PlantUML code using OpenAI API with conversation context
+- Streaming support for AI-generated PlantUML code
+- Conversation management with automatic cleanup (30 minutes inactivity)
 - Swagger/OpenAPI documentation with interactive UI
 - Request validation with detailed error messages
 - Global exception handling
@@ -75,7 +78,7 @@ java --add-opens java.desktop/com.sun.imageio.plugins.png=ALL-UNNAMED \
      --add-opens java.desktop/com.sun.imageio.plugins.gif=ALL-UNNAMED \
      --add-opens java.desktop/com.sun.imageio.plugins.bmp=ALL-UNNAMED \
      --add-opens java.desktop/com.sun.imageio.plugins.wbmp=ALL-UNNAMED \
-     -jar target/puml-server-0.0.6-HOTFIX.jar
+     -jar target/puml-server-0.0.7-SNAPSHOT.jar
 ```
 
 ## API Endpoints
@@ -170,6 +173,50 @@ Retrieves cached rendered content by ID and format type (svg, png, or text). The
 **Note:** Cache IDs are shared across all endpoints. An ID returned from `POST /api/v1/puml` can be used here, and vice versa.
 
 **Response:** Rendered content in the requested format (SVG, PNG, or plain text)
+
+### POST /api/v1/puml/generate
+Generates PlantUML code using OpenAI API based on a user prompt. The system automatically acts as a PlantUML expert. Supports conversation context and streaming.
+
+**Request:**
+```json
+{
+  "baseUrl": "https://api.openai.com/v1",
+  "apiKey": "sk-...",
+  "model": "gpt-4",
+  "prompt": "Create a sequence diagram showing user login flow",
+  "conversationId": "550e8400-e29b-41d4-a716-446655440000",
+  "stream": false
+}
+```
+
+**Response (non-streaming):**
+```json
+{
+  "puml": "@startuml\n\nBob -> Alice : hello\n\n@enduml",
+  "conversationId": "550e8400-e29b-41d4-a716-446655440000"
+}
+```
+
+**Response (streaming):** Server-Sent Events (SSE) stream with `text/event-stream` content type
+
+**Features:**
+- If `conversationId` is provided, maintains context from previous messages
+- If `conversationId` is not provided, creates a new conversation and returns its ID
+- If `stream` is `true`, returns SSE stream
+- If `stream` is `false`, returns JSON response
+- Conversations automatically expire after 30 minutes of inactivity
+- Generated PUML code is automatically cached
+
+### DELETE /api/v1/puml/conversation/{conversationId}
+Deletes a conversation by ID. The conversation and all its context will be removed permanently.
+
+**Response:**
+```json
+{
+  "message": "Conversation deleted successfully",
+  "conversationId": "550e8400-e29b-41d4-a716-446655440000"
+}
+```
 
 ## API Documentation
 

@@ -36,7 +36,6 @@ public class RenderService {
   public byte[] renderSvg(String puml) throws IOException {
     SourceStringReader reader = new SourceStringReader(puml);
     ByteArrayOutputStream os = new ByteArrayOutputStream();
-    // FileFormatOption with default settings matches PlantUML.com rendering
     reader.generateImage(os, new FileFormatOption(FileFormat.SVG));
     return os.toByteArray();
   }

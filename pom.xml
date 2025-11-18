@@ -11,7 +11,7 @@
   </parent>
   <groupId>mew</groupId>
   <artifactId>puml-server</artifactId>
-  <version>0.0.6-HOTFIX</version>
+  <version>0.0.7-SNAPSHOT</version>
   <name>puml-server</name>
   <description>REST API server for rendering PlantUML diagrams to various formats (SVG, PNG, Text) using Spring Boot.</description>
   <url />
@@ -74,6 +74,11 @@
       <groupId>org.springdoc</groupId>
       <artifactId>springdoc-openapi-starter-webmvc-ui</artifactId>
       <version>2.8.14</version>
+    </dependency>
+    <dependency>
+      <groupId>com.openai</groupId>
+      <artifactId>openai-java-spring-boot-starter</artifactId>
+      <version>4.8.0</version>
     </dependency>
   </dependencies>
 

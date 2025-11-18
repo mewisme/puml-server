@@ -81,7 +81,6 @@ public class RenderController {
       throw new NotFoundException("Rendered content not found or expired. ID: " + id);
     }
 
-    // Ensure rendered content exists (auto-render if needed)
     cacheService.ensureRenderedContent(entry);
 
     HttpHeaders headers = new HttpHeaders();
