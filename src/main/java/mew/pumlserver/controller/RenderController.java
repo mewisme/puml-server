@@ -71,38 +71,32 @@ public class RenderController {
   }
 
   @GetMapping(value = "/{type}/{id}/raw")
-  @Operation(summary = "Get rendered content by ID", description = "Retrieves cached rendered content by ID and format type. The ID can be obtained from any endpoint that returns an ID (POST /api/v1/puml, POST /api/v1/render/svg, etc.). The same ID can be used to retrieve SVG, PNG, or Text formats. Content expires after 30 minutes.")
+  @Operation(summary = "Get rendered content by ID", description = "Retrieves cached rendered content by ID and format type. The ID can be obtained from any endpoint that returns an ID (POST /api/v1/puml, POST /api/v1/render/svg, etc.). If the ID was created via POST /api/v1/puml without rendering, the content will be automatically rendered on first access. The same ID can be used to retrieve SVG, PNG, or Text formats. Content expires after 30 minutes.")
   public ResponseEntity<?> getRawContent(
       @PathVariable String type,
-      @PathVariable String id) {
+      @PathVariable String id) throws IOException {
     CacheEntry entry = cacheService.getCachedEntry(id);
 
     if (entry == null) {
       throw new NotFoundException("Rendered content not found or expired. ID: " + id);
     }
 
+    // Ensure rendered content exists (auto-render if needed)
+    cacheService.ensureRenderedContent(entry);
+
     HttpHeaders headers = new HttpHeaders();
 
     if ("text".equals(type)) {
-      if (entry.getTextContent() == null) {
-        throw new NotFoundException("Text content not available for ID: " + id);
-      }
       headers.setContentType(MediaType.TEXT_PLAIN);
       return ResponseEntity.ok()
           .headers(headers)
           .body(entry.getTextContent());
     } else if ("svg".equals(type)) {
-      if (entry.getSvgContent() == null) {
-        throw new NotFoundException("SVG content not available for ID: " + id);
-      }
       headers.setContentType(MediaType.parseMediaType("image/svg+xml"));
       return ResponseEntity.ok()
           .headers(headers)
           .body(entry.getSvgContent());
     } else if ("png".equals(type)) {
-      if (entry.getPngContent() == null) {
-        throw new NotFoundException("PNG content not available for ID: " + id);
-      }
       headers.setContentType(MediaType.IMAGE_PNG);
       return ResponseEntity.ok()
           .headers(headers)

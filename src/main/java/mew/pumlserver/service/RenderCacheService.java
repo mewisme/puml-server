@@ -99,6 +99,33 @@ public class RenderCacheService {
     }
 
     /**
+     * Ensure rendered content exists for a cache entry. If the entry doesn't have rendered content,
+     * render all formats and update the entry.
+     * 
+     * @param entry The cache entry to ensure rendered content for
+     * @throws IOException if rendering fails
+     */
+    public void ensureRenderedContent(CacheEntry entry) throws IOException {
+        if (entry == null) {
+            return;
+        }
+        
+        // If entry already has all rendered content, no need to render
+        if (entry.getSvgContent() != null && entry.getPngContent() != null 
+            && entry.getTextContent() != null) {
+            return;
+        }
+        
+        // Render all formats and update entry
+        byte[] svg = renderService.renderSvg(entry.getPuml());
+        byte[] png = renderService.renderPng(entry.getPuml());
+        String text = renderService.renderText(entry.getPuml());
+        entry.setSvgContent(svg);
+        entry.setPngContent(png);
+        entry.setTextContent(text);
+    }
+
+    /**
      * Check if entry is expired (older than 30 minutes)
      */
     private boolean isExpired(CacheEntry entry) {
