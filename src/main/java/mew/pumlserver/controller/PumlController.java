@@ -6,8 +6,11 @@ import io.swagger.v3.oas.annotations.media.ExampleObject;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
+import mew.pumlserver.dto.ExplainRequest;
+import mew.pumlserver.dto.ExplainResponse;
 import mew.pumlserver.dto.GenerateRequest;
 import mew.pumlserver.dto.GenerateResponse;
+import mew.pumlserver.dto.OptimizeRequest;
 import mew.pumlserver.dto.PumlResponse;
 import mew.pumlserver.dto.RenderRequest;
 import mew.pumlserver.dto.RenderResponse;
@@ -140,6 +143,141 @@ public class PumlController {
           .ok()
           .headers(headers)
           .body(new GenerateResponse(generatedPuml, conversationId));
+    }
+  }
+
+  @PostMapping(value = "/optimize", consumes = MediaType.APPLICATION_JSON_VALUE)
+  @Operation(summary = "Optimize PUML code using OpenAI", description = "Optimizes PlantUML code using OpenAI API. The system automatically acts as a PlantUML optimization expert. "
+      +
+      "Supports streaming. " +
+      "- If stream is true, returns Server-Sent Events (SSE) stream with text/event-stream content type. " +
+      "- If stream is false, returns JSON response with optimized PUML code. " +
+      "This endpoint does not maintain conversation context.", responses = {
+          @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Successfully optimized PUML code", content = @Content(mediaType = "application/json", schema = @Schema(implementation = PumlResponse.class), examples = @ExampleObject(name = "Non-streaming response", value = "{\"puml\":\"@startuml\\n\\nBob -> Alice : hello\\n\\n@enduml\"}"))),
+          @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Streaming response (when stream=true)", content = @Content(mediaType = "text/event-stream"))
+      })
+  @io.swagger.v3.oas.annotations.parameters.RequestBody(description = "OpenAI optimization request", required = true, content = @Content(mediaType = "application/json", schema = @Schema(implementation = OptimizeRequest.class), examples = {
+      @ExampleObject(name = "Non-streaming", value = "{\"baseUrl\":\"https://api.openai.com/v1\",\"apiKey\":\"sk-...\",\"model\":\"gpt-4\",\"puml\":\"@startuml\\n\\nBob -> Alice : hello\\n\\n@enduml\",\"stream\":false}"),
+      @ExampleObject(name = "Streaming", value = "{\"baseUrl\":\"https://api.openai.com/v1\",\"apiKey\":\"sk-...\",\"model\":\"gpt-4\",\"puml\":\"@startuml\\n\\nBob -> Alice : hello\\n\\n@enduml\",\"stream\":true}")
+  }))
+  public ResponseEntity<?> optimizePuml(
+      @Valid @org.springframework.web.bind.annotation.RequestBody OptimizeRequest request) {
+
+    if (Boolean.TRUE.equals(request.getStream())) {
+      SseEmitter emitter = new SseEmitter(60000L);
+
+      new Thread(() -> {
+        try {
+          StringBuilder fullContent = new StringBuilder();
+
+          String optimizedPuml = generationService.optimizePumlCode(
+              request.getBaseUrl(),
+              request.getApiKey(),
+              request.getModel(),
+              request.getPuml());
+
+          for (char c : optimizedPuml.toCharArray()) {
+            emitter.send(SseEmitter.event().data(String.valueOf(c)));
+            fullContent.append(c);
+            Thread.sleep(10);
+          }
+
+          cacheService.cachePumlCode(fullContent.toString());
+
+          emitter.complete();
+        } catch (Exception e) {
+          emitter.completeWithError(e);
+        }
+      }).start();
+
+      return ResponseEntity.ok()
+          .contentType(MediaType.TEXT_EVENT_STREAM)
+          .body(emitter);
+    } else {
+      String optimizedPuml = generationService.optimizePumlCode(
+          request.getBaseUrl(),
+          request.getApiKey(),
+          request.getModel(),
+          request.getPuml());
+
+      cacheService.cachePumlCode(optimizedPuml);
+
+      HttpHeaders headers = new HttpHeaders();
+      headers.setContentType(MediaType.APPLICATION_JSON);
+      return ResponseEntity
+          .ok()
+          .headers(headers)
+          .body(new PumlResponse(optimizedPuml));
+    }
+  }
+
+  @PostMapping(value = "/explain", consumes = MediaType.APPLICATION_JSON_VALUE)
+  @Operation(summary = "Explain PUML code using OpenAI", description = "Explains what a PlantUML diagram does using OpenAI API. The system automatically acts as a PlantUML explanation expert. "
+      +
+      "Supports streaming and multiple languages. " +
+      "- If stream is true, returns Server-Sent Events (SSE) stream with text/event-stream content type. " +
+      "- If stream is false, returns JSON response with explanation text. " +
+      "- Language parameter controls the language of the explanation (e.g., 'en' for English, 'vi' for Vietnamese). " +
+      "This endpoint does not maintain conversation context.", responses = {
+          @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Successfully explained PUML code", content = @Content(mediaType = "application/json", schema = @Schema(implementation = ExplainResponse.class), examples = @ExampleObject(name = "Non-streaming response", value = "{\"explanation\":\"This diagram shows a simple sequence diagram where Bob sends a 'hello' message to Alice.\"}"))),
+          @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Streaming response (when stream=true)", content = @Content(mediaType = "text/event-stream"))
+      })
+  @io.swagger.v3.oas.annotations.parameters.RequestBody(description = "OpenAI explanation request", required = true, content = @Content(mediaType = "application/json", schema = @Schema(implementation = ExplainRequest.class), examples = {
+      @ExampleObject(name = "Non-streaming (English)", value = "{\"baseUrl\":\"https://api.openai.com/v1\",\"apiKey\":\"sk-...\",\"model\":\"gpt-4\",\"puml\":\"@startuml\\n\\nBob -> Alice : hello\\n\\n@enduml\",\"language\":\"en\",\"stream\":false}"),
+      @ExampleObject(name = "Streaming (Vietnamese)", value = "{\"baseUrl\":\"https://api.openai.com/v1\",\"apiKey\":\"sk-...\",\"model\":\"gpt-4\",\"puml\":\"@startuml\\n\\nBob -> Alice : hello\\n\\n@enduml\",\"language\":\"vi\",\"stream\":true}")
+  }))
+  public ResponseEntity<?> explainPuml(
+      @Valid @org.springframework.web.bind.annotation.RequestBody ExplainRequest request) {
+
+    String language = request.getLanguage();
+    if (language == null || language.isBlank()) {
+      language = "en";
+    }
+    final String finalLanguage = language;
+
+    if (Boolean.TRUE.equals(request.getStream())) {
+      SseEmitter emitter = new SseEmitter(60000L);
+
+      new Thread(() -> {
+        try {
+          StringBuilder fullContent = new StringBuilder();
+
+          String explanation = generationService.explainPumlCode(
+              request.getBaseUrl(),
+              request.getApiKey(),
+              request.getModel(),
+              request.getPuml(),
+              finalLanguage);
+
+          for (char c : explanation.toCharArray()) {
+            emitter.send(SseEmitter.event().data(String.valueOf(c)));
+            fullContent.append(c);
+            Thread.sleep(10);
+          }
+
+          emitter.complete();
+        } catch (Exception e) {
+          emitter.completeWithError(e);
+        }
+      }).start();
+
+      return ResponseEntity.ok()
+          .contentType(MediaType.TEXT_EVENT_STREAM)
+          .body(emitter);
+    } else {
+      String explanation = generationService.explainPumlCode(
+          request.getBaseUrl(),
+          request.getApiKey(),
+          request.getModel(),
+          request.getPuml(),
+          finalLanguage);
+
+      HttpHeaders headers = new HttpHeaders();
+      headers.setContentType(MediaType.APPLICATION_JSON);
+      return ResponseEntity
+          .ok()
+          .headers(headers)
+          .body(new ExplainResponse(explanation));
     }
   }
 

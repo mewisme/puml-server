@@ -10,6 +10,8 @@ REST API server for rendering PlantUML diagrams to various formats (SVG, PNG, Te
 - Cache PUML code with unique IDs for later retrieval
 - Retrieve cached PUML code by ID
 - Generate PlantUML code using OpenAI API with conversation context
+- Optimize PlantUML code using OpenAI API
+- Explain PlantUML code using OpenAI API with multi-language support
 - Streaming support for AI-generated PlantUML code
 - Conversation management with automatic cleanup (30 minutes inactivity)
 - Swagger/OpenAPI documentation with interactive UI
@@ -78,7 +80,7 @@ java --add-opens java.desktop/com.sun.imageio.plugins.png=ALL-UNNAMED \
      --add-opens java.desktop/com.sun.imageio.plugins.gif=ALL-UNNAMED \
      --add-opens java.desktop/com.sun.imageio.plugins.bmp=ALL-UNNAMED \
      --add-opens java.desktop/com.sun.imageio.plugins.wbmp=ALL-UNNAMED \
-     -jar target/puml-server-0.0.7-SNAPSHOT.jar
+     -jar target/puml-server-0.0.8-SNAPSHOT.jar
 ```
 
 ## API Endpoints
@@ -206,6 +208,66 @@ Generates PlantUML code using OpenAI API based on a user prompt. The system auto
 - If `stream` is `false`, returns JSON response
 - Conversations automatically expire after 30 minutes of inactivity
 - Generated PUML code is automatically cached
+
+### POST /api/v1/puml/optimize
+Optimizes PlantUML code using OpenAI API. The system automatically acts as a PlantUML optimization expert. Supports streaming.
+
+**Request:**
+```json
+{
+  "baseUrl": "https://api.openai.com/v1",
+  "apiKey": "sk-...",
+  "model": "gpt-4",
+  "puml": "@startuml\n\nBob -> Alice : hello\n\n@enduml",
+  "stream": false
+}
+```
+
+**Response (non-streaming):**
+```json
+{
+  "puml": "@startuml\n\nBob -> Alice : hello\n\n@enduml"
+}
+```
+
+**Response (streaming):** Server-Sent Events (SSE) stream with `text/event-stream` content type
+
+**Features:**
+- If `stream` is `true`, returns SSE stream
+- If `stream` is `false`, returns JSON response
+- Optimized PUML code is automatically cached
+- This endpoint does not maintain conversation context
+
+### POST /api/v1/puml/explain
+Explains what a PlantUML diagram does using OpenAI API. The system automatically acts as a PlantUML explanation expert. Supports streaming and multiple languages.
+
+**Request:**
+```json
+{
+  "baseUrl": "https://api.openai.com/v1",
+  "apiKey": "sk-...",
+  "model": "gpt-4",
+  "puml": "@startuml\n\nBob -> Alice : hello\n\n@enduml",
+  "language": "en",
+  "stream": false
+}
+```
+
+**Response (non-streaming):**
+```json
+{
+  "explanation": "This diagram shows a simple sequence diagram where Bob sends a 'hello' message to Alice."
+}
+```
+
+**Response (streaming):** Server-Sent Events (SSE) stream with `text/event-stream` content type
+
+**Features:**
+- If `stream` is `true`, returns SSE stream
+- If `stream` is `false`, returns JSON response
+- `language` parameter controls the language of the explanation (e.g., 'en' for English, 'vi' for Vietnamese)
+- Default language is English if not specified
+- This endpoint does not maintain conversation context
 
 ### DELETE /api/v1/puml/conversation/{conversationId}
 Deletes a conversation by ID. The conversation and all its context will be removed permanently.

@@ -2,15 +2,29 @@
 
 cd "$(dirname "$0")/.."
 
-echo "Building PUML Server..."
-./mvnw clean package -DskipTests
+echo "Starting PUML Server on port 7235..."
+echo ""
 
-if [ $? -eq 0 ]; then
+if [ ! -f "target/puml-server-0.0.8-SNAPSHOT.jar" ]; then
+    echo "JAR file not found. Building project first..."
+    ./scripts/build.sh
+    if [ $? -ne 0 ]; then
+        echo "Build failed. Cannot start server."
+        exit 1
+    fi
     echo ""
-    echo "Build successful! JAR file created in target/puml-server-0.0.7-SNAPSHOT.jar"
-else
+fi
+
+java --add-opens java.desktop/com.sun.imageio.plugins.png=ALL-UNNAMED \
+--add-opens java.desktop/com.sun.imageio.plugins.jpeg=ALL-UNNAMED \
+--add-opens java.desktop/com.sun.imageio.plugins.gif=ALL-UNNAMED \
+--add-opens java.desktop/com.sun.imageio.plugins.bmp=ALL-UNNAMED \
+--add-opens java.desktop/com.sun.imageio.plugins.wbmp=ALL-UNNAMED \
+-jar target/puml-server-0.0.8-SNAPSHOT.jar
+
+if [ $? -ne 0 ]; then
     echo ""
-    echo "Build failed!"
+    echo "Server failed to start!"
     exit 1
 fi
 
